@@ -47,19 +47,52 @@ year_ids = {
     "2024": 36,
 }
 
-# TODO: Make the following parameters configurable
-league_name = "World Cups and World Championships"
-discipline_kind = "speed"
-category_name = "Men"
+league_names = {
+    "wc": "World Cups and World Championships",
+    "y": "IFSC Youth",
+    "pc": "IFSC Paraclimbing (L)",
+    "aa": "IFSC Asia Adults",
+    "ay": "IFSC Asia Youth",
+    "ey": "IFSC Europe Youth",
+    "pa": "IFSC Panam",
+    "oc": "IFSC Oceania",
+    "g": "Games",
+    "oe": "Other events",
+    "m": "Masters and Promotional Events"
+}
+
+discipline_names = {
+    "l": "lead",
+    "s": "speed",
+    "b": "boulder",
+    "c": "combined",
+    "bl": "boulder&lead"
+}
+
+category_names = {
+    "m": "Men",
+    "w": "Women",
+    "yam": "Youth A Male",
+    "yaf": "Youth A Female",
+    "ybm": "Youth B Male",
+    "ybf": "Youth B Female",
+    "jm": "Juniors Male",
+    "jf": "Juniors Female"
+}
 
 
 # Spider class for scraping the results from the IFSC result service
 class IfscResultsInfoSpider(Spider):
     name = "ifsc_results_info"
     allowed_domains = [domain_name]
-    # TODO: Make the following parameter configurable
-    start_urls = [f"{api_url}/seasons/{year_ids['2008']}"]
-    # start_urls = [f"{api_url}seasons/{year_id}" for year_id in year_ids.values()]
+
+    def __init__(self, years, leagues, disciplines, categories, *args, **kwargs):
+        super(IfscResultsInfoSpider, self).__init__(*args, **kwargs)
+        self.years = years.split(',')
+        self.leagues = [league_names[league] for league in leagues.split(',')]
+        self.disciplines = [discipline_names[discipline] for discipline in disciplines.split(',')]
+        self.categories = [category_names[category] for category in categories.split(',')]
+        self.start_urls = [f"{api_url}/seasons/{year_ids[year]}" for year in self.years]
 
     def start_requests(self):
         for url in self.start_urls:
@@ -73,13 +106,13 @@ class IfscResultsInfoSpider(Spider):
     def parse_year(self, response):
         json_data = json.loads(response.text)
         league = next(league for league in json_data["leagues"]
-                      if league["name"] == league_name)
+                      if league["name"] in self.leagues)
         league_url = league["url"]
         league_season_id = league_url[league_url.rfind("/") + 1:len(league_url)]
         event_ids = []
         for event in json_data["events"]:
             if next(
-                    (discipline for discipline in event["disciplines"] if discipline["kind"] == discipline_kind), None
+                    (discipline for discipline in event["disciplines"] if discipline["kind"] in self.disciplines), None
             ) is not None and str(event["league_season_id"]) == league_season_id:
                 event_ids.append(event["event_id"])
 
@@ -96,7 +129,7 @@ class IfscResultsInfoSpider(Spider):
         date = json_data["starts_at"][0:10]
         full_result_urls = []
         for d_cat in json_data["d_cats"]:
-            if d_cat["discipline_kind"] == discipline_kind and d_cat["category_name"] == category_name:
+            if d_cat["discipline_kind"] in self.disciplines and d_cat["category_name"] in self.categories:
                 full_result_urls.append(d_cat["full_results_url"])
 
         for full_result_url in full_result_urls:
