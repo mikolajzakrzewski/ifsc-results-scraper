@@ -57,6 +57,7 @@ category_name = "Men"
 class IfscResultsInfoSpider(Spider):
     name = "ifsc_results_info"
     allowed_domains = [domain_name]
+    # TODO: Make the following parameter configurable
     start_urls = [f"{api_url}/seasons/{year_ids['2008']}"]
     # start_urls = [f"{api_url}seasons/{year_id}" for year_id in year_ids.values()]
 
@@ -86,13 +87,13 @@ class IfscResultsInfoSpider(Spider):
             yield scrapy.Request(
                 f"{api_url}/events/{event_id}",
                 callback=self.parse_event,
-                cb_kwargs={"year": json_data["name"]},
                 headers={"Referer": base_url},
             )
 
 # Gather the full result URLs for the given event, discipline kinds and categories
-    def parse_event(self, response, year):
+    def parse_event(self, response):
         json_data = json.loads(response.text)
+        date = json_data["starts_at"][0:10]
         full_result_urls = []
         for d_cat in json_data["d_cats"]:
             if d_cat["discipline_kind"] == discipline_kind and d_cat["category_name"] == category_name:
@@ -102,12 +103,13 @@ class IfscResultsInfoSpider(Spider):
             yield scrapy.Request(
                 base_url + full_result_url,
                 callback=self.parse_results,
-                cb_kwargs={"year": year},
+                cb_kwargs={"date": date},
                 headers={"Referer": base_url},
             )
 
 # Gather data from the full results of the given event
-    def parse_results(self, response, year):
+    def parse_results(self, response, date):
+        year = date[0:4]
         json_data = json.loads(response.text)
         event = json_data["event"]
         for athlete in json_data["ranking"]:
@@ -141,9 +143,15 @@ class IfscResultsInfoSpider(Spider):
             # Calculate the number of years the athlete has been active in the IFSC based on the first documented result
             first_activity_year = int(athlete_info["all_results"][-1]["season"])
             years_active = int(year) - first_activity_year
+            prior_participations = 0
+            for result in reversed(athlete_info["all_results"]):
+                if result["date"] > date:
+                    break
+                else:
+                    prior_participations += 1
 
             yield {
-                "year": year,
+                "start_date": date,
                 "event": event,
                 "athlete_id": athlete_id,
                 "rank": rank,
@@ -152,6 +160,7 @@ class IfscResultsInfoSpider(Spider):
                 "age": age,
                 "height": height,
                 "years_active": years_active,
+                "prior_participations": prior_participations,
                 "country": country,
                 "round_scores": round_scores,
             }
