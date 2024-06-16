@@ -2,6 +2,14 @@
 
 Program for scraping climbing competition results from the IFSC Climbing Result Service website (https://ifsc.results.info) using **scrapy** and its **Spider** class
 
+### Disclaimer:
+
+**Legitimate Interest**: This scraper gathers data for research purposes, specifically to analyze climbing competition results for statistical and performance analysis. The legitimate interest for collecting and processing this data includes contributing to the understanding of sports performance, improving training methodologies, and enhancing the overall experience of climbing athletes and enthusiasts.
+
+It is essential to handle the scraped data in accordance with applicable data protection laws, including GDPR, and to respect the privacy rights of individuals whose data may be included in the competition results.
+
+**Note**: Always ensure compliance with the website's terms of service and any legal requirements related to web scraping and data usage.
+
 ## Run Locally
 
 Clone the project
