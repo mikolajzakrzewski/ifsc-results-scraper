@@ -86,6 +86,7 @@ category_names = {
 class IfscResultsInfoSpider(Spider):
     name = "ifsc_results_info"
     allowed_domains = [domain_name]
+    download_delay = 10
 
     def __init__(self, years, leagues, disciplines, categories, *args, **kwargs):
         super(IfscResultsInfoSpider, self).__init__(*args, **kwargs)
