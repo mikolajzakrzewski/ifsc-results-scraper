@@ -1,3 +1,9 @@
+### Project Specific
+
+# Scraped data
+*.csv
+*.json
+
 ### OS X
 
 # General

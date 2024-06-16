@@ -47,6 +47,7 @@ year_ids = {
     "2024": 36,
 }
 
+# Passed parameters abbreviations and their full names
 league_names = {
     "wc": "World Cups and World Championships",
     "y": "IFSC Youth",
@@ -184,7 +185,7 @@ class IfscResultsInfoSpider(Spider):
                     prior_participations += 1
 
             yield {
-                "start_date": date,
+                "date": date,
                 "event": event,
                 "athlete_id": athlete_id,
                 "rank": rank,
