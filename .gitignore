@@ -1,6 +1,9 @@
 ### Project Specific
 
-# Scraped data
+# Scraped data database
+*.db
+
+# Scraped data files
 *.csv
 *.json
 
