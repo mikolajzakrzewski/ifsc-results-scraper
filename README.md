@@ -1,6 +1,6 @@
 # IFSC Results Scraper
 
-Program for scraping climbing competition results from the IFSC Climbing Result Service website (https://ifsc.results.info) using **scrapy** and its **Spider** class
+Program for scraping climbing competition results from the IFSC Climbing Result Service website (https://ifsc.results.info) using **scrapy** and its **Spider** class. Scraped data is stored in a local SQLite database.
 
 ### Disclaimer:
 
@@ -35,7 +35,7 @@ Go to the scrapy project directory
 Run the program
 
 ```bash
-scrapy crawl -a years=<years> -a leagues=<league_codes> -a disciplines=<discipline_codes> -a categories=<category_codes> ifsc_results_info -o <output_file>
+scrapy crawl -a years=<years> -a leagues=<league_codes> -a disciplines=<discipline_codes> -a categories=<category_codes> ifsc_results_info -o <output_file> (optional)
 ```
 
 parameters' definition:
@@ -49,7 +49,7 @@ parameters' definition:
 
 <category_codes> = comma-separated category codes
 
-<output_file> = .csv or .json file to write the scraped data into
+<output_file> (optional) = .csv or .json file to write the scraped data into
 ```
 
 allowed parameters' values:
