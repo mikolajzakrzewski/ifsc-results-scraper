@@ -55,6 +55,7 @@ league_names = {
     "pc": "IFSC Paraclimbing (L)",
     "aa": "IFSC Asia Adults",
     "ay": "IFSC Asia Youth",
+    "ea": "IFSC Europe Adults",
     "ey": "IFSC Europe Youth",
     "pa": "IFSC Panam",
     "oc": "IFSC Oceania",
@@ -178,7 +179,7 @@ class IfscResultsInfoSpider(Spider):
     def parse_results(self, response, date, category_id):
         year = date[0:4]
         json_data = json.loads(response.text)
-        event = json_data["event"]
+        event_name = json_data["event"]
         for athlete in json_data["ranking"]:
             athlete_id = athlete["athlete_id"]
             rank = athlete["rank"]
@@ -187,16 +188,22 @@ class IfscResultsInfoSpider(Spider):
                 round_name = round_type["round_name"]
                 round_scores[round_name] = round_type["score"]
 
-            # Gather basic personal information about the athlete
-            firstname = athlete["firstname"]
-            lastname = athlete["lastname"]
-            country = athlete["country"]
+            round_scores = [
+                {"round_name": round_type["round_name"],
+                 "rank": round_type["rank"],
+                 "score": round_type["score"]}
+                for round_type in athlete["rounds"]]
 
-            # Gather additional information from the athlete's API endpoint
+            round_scores_json = json.dumps(round_scores)
+
+            # Gather information from the athlete's API endpoint
             athlete_info = json.loads(
                 requests.get(f"{api_url}/athletes/{athlete_id}", headers={'Referer': base_url}).text
             )
 
+            firstname = athlete_info["firstname"]
+            lastname = athlete_info["lastname"]
+            country = athlete_info["country"]
             birthday = athlete_info["birthday"]
             gender = athlete_info["gender"]
             height = athlete_info["height"]
@@ -244,20 +251,22 @@ class IfscResultsInfoSpider(Spider):
                 age=age,
                 years_active=years_active,
                 prior_participations=prior_participations,
-                round_scores=json.dumps(round_scores)
+                round_scores=round_scores_json
             )
 
             yield {
                 "date": date,
-                "event": event,
+                "event": event_name,
                 "athlete_id": athlete_id,
                 "rank": rank,
                 "firstname": firstname,
                 "lastname": lastname,
-                "age": age,
+                "country": country,
+                "birthday": birthday,
+                "gender": gender,
                 "height": height,
+                "age": age,
                 "years_active": years_active,
                 "prior_participations": prior_participations,
-                "country": country,
-                "round_scores": round_scores,
+                "round_scores": round_scores_json,
             }
