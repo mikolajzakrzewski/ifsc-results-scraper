@@ -29,8 +29,7 @@ class IfscScraperPipeline:
                 event_id INTEGER PRIMARY KEY,
                 event_name TEXT,
                 event_date TEXT,
-                event_country TEXT,
-                event_league TEXT
+                event_location TEXT
             );
             """
         )
@@ -90,15 +89,14 @@ class IfscScraperPipeline:
         if isinstance(item, EventItem):
             self.cur.execute(
                 """
-                INSERT OR IGNORE INTO events (event_id, event_name, event_date, event_country, event_league)
-                VALUES (?, ?, ?, ?, ?);
+                INSERT OR IGNORE INTO events (event_id, event_name, event_date, event_location)
+                VALUES (?, ?, ?, ?);
                 """,
                 (
                     adapter.get("event_id"),
                     adapter.get("name"),
                     adapter.get("date"),
-                    adapter.get("country"),
-                    adapter.get("league"),
+                    adapter.get("location")
                 )
             )
             self.con.commit()

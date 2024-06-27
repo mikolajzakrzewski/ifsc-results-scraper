@@ -136,18 +136,13 @@ class IfscResultsInfoSpider(Spider):
         event_name = json_data["name"]
         event_date = date
         event_country = json_data["country"]
-        event_league = requests.get(
-            f"{api_url}/season_leagues/{json_data['league_season_id']}",
-            headers={'referer': base_url}
-        ).json()["league"]
 
         # Create an event item and save it to the database
         yield EventItem(
             event_id=event_id,
             name=event_name,
             date=event_date,
-            country=event_country,
-            league=event_league
+            location=event_country
         )
 
         # Save the categories' information to the database

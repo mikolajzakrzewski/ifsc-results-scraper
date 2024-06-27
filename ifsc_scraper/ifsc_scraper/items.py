@@ -16,8 +16,7 @@ class EventItem(scrapy.Item):
     event_id = scrapy.Field()
     name = scrapy.Field()
     date = scrapy.Field()
-    country = scrapy.Field()
-    league = scrapy.Field()
+    location = scrapy.Field()
 
 
 class CategoryItem(scrapy.Item):
