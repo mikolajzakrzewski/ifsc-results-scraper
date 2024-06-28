@@ -47,3 +47,20 @@ class EntryItem(scrapy.Item):
     years_active = scrapy.Field()
     prior_participations = scrapy.Field()
     round_scores = scrapy.Field()
+
+
+class FileEntryItem(scrapy.Item):
+    date = scrapy.Field()
+    event = scrapy.Field()
+    athlete_id = scrapy.Field()
+    rank = scrapy.Field()
+    firstname = scrapy.Field()
+    lastname = scrapy.Field()
+    country = scrapy.Field()
+    birthday = scrapy.Field()
+    gender = scrapy.Field()
+    height = scrapy.Field()
+    age = scrapy.Field()
+    years_active = scrapy.Field()
+    prior_participations = scrapy.Field()
+    round_scores = scrapy.Field()
