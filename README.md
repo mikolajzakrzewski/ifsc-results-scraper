@@ -1,6 +1,6 @@
 # IFSC Results Scraper
 
-Program for scraping climbing competition results from the IFSC Climbing Result Service website (https://ifsc.results.info) using **scrapy** and its **Spider** class. Scraped data is stored in a local SQLite database.
+Program for scraping climbing competition results from the official website of the International Federation of Sport Climbing (https://ifsc-climbing.org) using **scrapy** and its **Spider** class. Scraped data is saved to a local SQLite database and a csv file with a timestamp.
 
 ### Disclaimer:
 
@@ -35,7 +35,7 @@ Go to the scrapy project directory
 Run the program
 
 ```bash
-scrapy crawl -a years=<years> -a leagues=<league_codes> -a disciplines=<discipline_codes> -a categories=<category_codes> ifsc_results_info -o <output_file> (optional)
+scrapy crawl -a years=<years> -a disciplines=<discipline_codes> -a categories=<category_codes> ifsc_climbing_org
 ```
 
 parameters' definition:
@@ -43,32 +43,15 @@ parameters' definition:
 ```bash
 <years> = comma-separated years
 
-<league_codes> = comma-separated league codes
-
 <discipline_codes> = comma-separated discipline codes
 
 <category_codes> = comma-separated category codes
-
-<output_file> (optional) = .csv or .json file to write the scraped data into
 ```
 
 allowed parameters' values:
 
 ```bash
 years: 1990-2024
-
-league_codes:
-    "wc": "World Cups and World Championships",
-    "y": "IFSC Youth",
-    "pc": "IFSC Paraclimbing (L)",
-    "aa": "IFSC Asia Adults",
-    "ay": "IFSC Asia Youth",
-    "ey": "IFSC Europe Youth",
-    "pa": "IFSC Panam",
-    "oc": "IFSC Oceania",
-    "g": "Games",
-    "oe": "Other events",
-    "m": "Masters and Promotional Events"
 
 discipline_codes:
     "l": "lead",
@@ -78,20 +61,22 @@ discipline_codes:
     "bl": "boulder&lead"
 
 category_codes:
-    "m": "Men",
-    "w": "Women",
-    "yam": "Youth A Male",
-    "yaf": "Youth A Female",
-    "ybm": "Youth B Male",
-    "ybf": "Youth B Female",
-    "jm": "Juniors Male",
-    "jf": "Juniors Female"
+    "m": "men",
+    "w": "women",
+    "yam": "youth a male",
+    "yaf": "youth a female",
+    "ybm": "youth b male",
+    "ybf": "youth b female",
+    "jm": "juniors male",
+    "jf": "juniors female"
 ```
 
 ### Example execution
 
+Scrape the men's and women's speed climbing results from the years 2014 to 2023:
+
 ```bash
-scrapy crawl -a years=2013 -a leagues=wc -a disciplines=s -a categories=m ifsc_results_info -o results.csv
+scrapy crawl -a years=2014,2015,2016,2017,2018,2019,2020,2021,2022,2023 -a disciplines=s -a categories=m,w ifsc_climbing_org
 ```
 
 ## Authors
