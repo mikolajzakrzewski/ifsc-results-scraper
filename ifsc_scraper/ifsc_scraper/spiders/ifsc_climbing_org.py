@@ -37,7 +37,7 @@ class IfscClimbingOrgSpider(Spider):
     allowed_domains = [domain_name]
     custom_settings = {
         'FEEDS': {
-            'results_%(time)s.csv': {
+            'results_%(name)s_%(time)s.csv': {
                 'format': 'csv',
                 'encoding': 'utf8',
                 'store_empty': False,
