@@ -109,15 +109,10 @@ class IfscClimbingOrgSpider(Spider):
         end_str = "\\\","
         start_index = text_data.find(start_str)
         end_index = text_data.find(end_str, start_index + len(start_str))
-        # TODO: dont save events that dont fit the criteria
         if start_index != -1 and end_index != -1:
             event_id = text_data[start_index + len(start_str):end_index]
-            yield EventItem(
-                event_id=event_id,
-                name=event_name,
-                date=event_date,
-                location=event_location
-            )
+        else:
+            return
 
         # Extract the discipline & category IDs from the response
         start_str = "navigationItems\\\":"
@@ -127,8 +122,20 @@ class IfscClimbingOrgSpider(Spider):
         event_data = text_data[start_index + len(start_str):end_index].replace("\\", "")
         event_data = json.loads(event_data)
 
+        # Create a variable to check if the event item has already been yielded
+        event_yielded = False
+
         for category_id, category_data in event_data.items():
             if category_data['discipline'] in self.disciplines and category_data['category'] in self.categories:
+                if not event_yielded:
+                    yield EventItem(
+                        event_id=event_id,
+                        name=event_name,
+                        date=event_date,
+                        location=event_location
+                    )
+                    event_yielded = True
+
                 headers = {
                     "Next-Action": "efa2fa106f24654dd09188f3c815302653521600"
                 }
