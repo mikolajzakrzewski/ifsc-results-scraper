@@ -178,10 +178,6 @@ class IfscResultsInfoSpider(Spider):
         for athlete in json_data["ranking"]:
             athlete_id = athlete["athlete_id"]
             rank = athlete["rank"]
-            round_scores = {}
-            for round_type in athlete["rounds"]:
-                round_name = round_type["round_name"]
-                round_scores[round_name] = round_type["score"]
 
             round_scores = [
                 {"round_name": round_type["round_name"],
