@@ -56,7 +56,6 @@ class IfscClimbingOrgSpider(Spider):
 # Gather the event IDs for the given year, leagues and discipline kinds
     def parse_year(self, response):
         json_data = json.loads(response.text)
-        print(json_data)
         for event in json_data['items']:
             event_url = event['url']
             event_name = event['title']
@@ -130,6 +129,12 @@ class IfscClimbingOrgSpider(Spider):
         for athlete in ranking:
             athlete_id = athlete["athlete_id"]
             rank = athlete["rank"]
+            round_scores = [
+                {"round_name": round_type["round_name"],
+                 "rank": round_type["rank"],
+                 "score": round_type["score"]}
+                for round_type in athlete["rounds"]
+            ]
 
             # Convert the athlete's name to a URL-friendly format
             name = athlete["firstname"] + " " + athlete["lastname"].strip()
@@ -142,10 +147,11 @@ class IfscClimbingOrgSpider(Spider):
             yield scrapy.Request(
                 athlete_url,
                 callback=self.parse_athlete,
-                cb_kwargs={"category_id": category_id, "rank": rank, "event_date": event_date}
+                cb_kwargs={"event_date": event_date, "category_id": category_id,
+                           "rank": rank, "round_scores": round_scores}
             )
 
-    def parse_athlete(self, response, category_id, rank, event_date):
+    def parse_athlete(self, response, event_date, category_id, rank, round_scores):
         # Extract the part of the response that contains the athlete's information
         soup = BeautifulSoup(response.text, 'html.parser')
         script_tags = soup.find_all('script')
@@ -194,5 +200,30 @@ class IfscClimbingOrgSpider(Spider):
                 speed_personal_best_round=speed_personal_best_round
             )
 
-    def parse_entry(self, response, category_id, athlete_id, rank, event_date):
-        pass
+            # Climbers' age is rounded down to the nearest year (general rule in climbing competitions)
+            event_year = event_date[0:4]
+            if birthday is None:
+                age = None
+            else:
+                age = int(event_year) - int(birthday[0:4])
+
+            # Calculate the number of years the athlete has been active in the IFSC based on the first documented result
+            first_activity_year = int(athlete_info["all_results"][-1]["season"])
+            years_active = int(event_year) - first_activity_year
+            prior_participations = 0
+            for result in reversed(athlete_info["all_results"]):
+                if result["date"] > event_date:
+                    break
+                else:
+                    prior_participations += 1
+
+            # Create an entry item and save it to the database
+            yield EntryItem(
+                category_id=category_id,
+                athlete_id=athlete_id,
+                rank=rank,
+                age=age,
+                years_active=years_active,
+                prior_participations=prior_participations,
+                round_scores=json.dumps(round_scores)
+            )
