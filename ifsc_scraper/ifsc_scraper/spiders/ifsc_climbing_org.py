@@ -52,6 +52,7 @@ class IfscClimbingOrgSpider(Spider):
                     'country',
                     'birthday',
                     'gender',
+                    'paraclimbing_sport_class',
                     'height',
                     'age',
                     'years_active',
