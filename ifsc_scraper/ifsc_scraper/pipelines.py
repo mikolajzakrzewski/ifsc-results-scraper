@@ -57,6 +57,7 @@ class IfscScraperPipeline:
                 athlete_country TEXT,
                 athlete_birthday TEXT,
                 athlete_gender TEXT,
+                athlete_paraclimbing_sport_class TEXT,
                 athlete_height INTEGER,
                 athlete_speed_personal_best_score REAL,
                 athlete_speed_personal_best_date TEXT,
@@ -121,14 +122,15 @@ class IfscScraperPipeline:
                 """
                 INSERT INTO athletes (
                 athlete_id, athlete_firstname, athlete_lastname, athlete_country, athlete_birthday,
-                athlete_gender, athlete_height, athlete_speed_personal_best_score,
+                athlete_gender, athlete_paraclimbing_sport_class, athlete_height, athlete_speed_personal_best_score,
                 athlete_speed_personal_best_date, athlete_speed_personal_best_round
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT (athlete_id) DO UPDATE SET
                 athlete_firstname=excluded.athlete_firstname,
                 athlete_lastname=excluded.athlete_lastname,
                 athlete_country=excluded.athlete_country,
                 athlete_gender=excluded.athlete_gender,
+                athlete_paraclimbing_sport_class=excluded.athlete_paraclimbing_sport_class,
                 athlete_height=excluded.athlete_height,
                 athlete_speed_personal_best_score=excluded.athlete_speed_personal_best_score,
                 athlete_speed_personal_best_date=excluded.athlete_speed_personal_best_date,
@@ -141,6 +143,7 @@ class IfscScraperPipeline:
                     adapter.get("country"),
                     adapter.get("birthday"),
                     adapter.get("gender"),
+                    adapter.get("paraclimbing_sport_class"),
                     adapter.get("height"),
                     adapter.get("speed_personal_best_score"),
                     adapter.get("speed_personal_best_date"),

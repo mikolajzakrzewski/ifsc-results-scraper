@@ -218,6 +218,7 @@ class IfscClimbingOrgSpider(Spider):
             country = athlete_info["country"]
             birthday = athlete_info["birthday"]
             gender = athlete_info["gender"]
+            paraclimbing_sport_class = athlete_info["paraclimbing_sport_class"]
             height = athlete_info["height"]
             if athlete_info["speed_personal_best"] is None:
                 speed_personal_best_score = None
@@ -236,6 +237,7 @@ class IfscClimbingOrgSpider(Spider):
                 country=country,
                 birthday=birthday,
                 gender=gender,
+                paraclimbing_sport_class=paraclimbing_sport_class,
                 height=height,
                 speed_personal_best_score=speed_personal_best_score,
                 speed_personal_best_date=speed_personal_best_date,
@@ -281,6 +283,7 @@ class IfscClimbingOrgSpider(Spider):
                 country=country,
                 birthday=birthday,
                 gender=gender,
+                paraclimbing_sport_class=paraclimbing_sport_class,
                 height=height,
                 age=age,
                 years_active=years_active,
