@@ -87,6 +87,7 @@ class IfscScraperPipeline:
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
 
+        # Insert the item into the appropriate database table based on the item type
         if isinstance(item, EventItem):
             self.cur.execute(
                 """
@@ -118,6 +119,8 @@ class IfscScraperPipeline:
             self.con.commit()
 
         elif isinstance(item, AthleteItem):
+
+            # Athlete info may change over time, so ON CONFLICT DO UPDATE is used to update the athlete info
             self.cur.execute(
                 """
                 INSERT INTO athletes (

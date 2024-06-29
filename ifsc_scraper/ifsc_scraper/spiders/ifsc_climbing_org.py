@@ -11,6 +11,7 @@ domain_name = "ifsc-climbing.org"
 base_url = f"https://www.{domain_name}"
 api_url = f"{base_url}/api/dapi"
 
+# Dictionaries for mapping the discipline and category names
 discipline_names = {
     "l": "lead",
     "s": "speed",
@@ -35,6 +36,8 @@ category_names = {
 class IfscClimbingOrgSpider(Spider):
     name = "ifsc_climbing_org"
     allowed_domains = [domain_name]
+
+    # Custom settings for exporting the results to a CSV file
     custom_settings = {
         'FEEDS': {
             'results_%(name)s_%(time)s.csv': {
@@ -86,6 +89,8 @@ class IfscClimbingOrgSpider(Spider):
 # Gather the event IDs for the given year, leagues and discipline kinds
     def parse_year(self, response):
         json_data = json.loads(response.text)
+
+        # Extract the events' information from the JSON data
         for event in json_data['items']:
             event_url = event['url']
             event_name = event['title']
@@ -137,16 +142,18 @@ class IfscClimbingOrgSpider(Spider):
                     )
                     event_yielded = True
 
-                headers = {
-                    "Next-Action": "efa2fa106f24654dd09188f3c815302653521600"
-                }
-                payload = [{"event_id": event_id, "id": category_id}]
                 yield CategoryItem(
                     event_id=event_id,
                     category_id=category_id,
                     discipline=category_data['discipline'],
                     name=category_data['category']
                 )
+
+                # Create headers and a payload for the POST request
+                headers = {
+                    "Next-Action": "efa2fa106f24654dd09188f3c815302653521600"
+                }
+                payload = [{"event_id": event_id, "id": category_id}]
 
                 yield scrapy.Request(
                     event_url,
@@ -161,9 +168,13 @@ class IfscClimbingOrgSpider(Spider):
 # Gather data from the full results of the given event
     def parse_results(self, response, event_date, event_name, category_id):
         data = response.text
+
+        # Extract the part of the response that contains the ranking data
         separator_index = data.find("1:")
         data = data[separator_index + 2:].strip()
         ranking = json.loads(data)["data"]["ranking"]
+
+        # Extract the athletes' information from the ranking data
         for athlete in ranking:
             athlete_id = athlete["athlete_id"]
             rank = athlete["rank"]
@@ -193,10 +204,14 @@ class IfscClimbingOrgSpider(Spider):
         # Extract the part of the response that contains the athlete's information
         soup = BeautifulSoup(response.text, 'html.parser')
         script_tags = soup.find_all('script')
+
+        # Search for the script tag containing the athlete's information (example search text: 'firstname')
         search_text = 'firstname'
         script_text = [script.string for script in script_tags if script.string and search_text in script.string]
         script_text = script_text[0]
         script_text = script_text.replace("\\", "")
+
+        # Extract the athlete's information from the script text
         match = re.search(r'{"athlete":{.*', script_text)
         if match:
             script_text = match.group()
