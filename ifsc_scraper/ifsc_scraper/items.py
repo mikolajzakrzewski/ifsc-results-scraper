@@ -19,13 +19,6 @@ class EventItem(scrapy.Item):
     location = scrapy.Field()
 
 
-class CategoryItem(scrapy.Item):
-    category_id = scrapy.Field()
-    event_id = scrapy.Field()
-    discipline = scrapy.Field()
-    name = scrapy.Field()
-
-
 class AthleteItem(scrapy.Item):
     athlete_id = scrapy.Field()
     firstname = scrapy.Field()
@@ -41,7 +34,9 @@ class AthleteItem(scrapy.Item):
 
 
 class EntryItem(scrapy.Item):
-    category_id = scrapy.Field()
+    event_id = scrapy.Field()
+    discipline = scrapy.Field()
+    category = scrapy.Field()
     athlete_id = scrapy.Field()
     rank = scrapy.Field()
     age = scrapy.Field()
@@ -53,6 +48,8 @@ class EntryItem(scrapy.Item):
 class FileEntryItem(scrapy.Item):
     date = scrapy.Field()
     event = scrapy.Field()
+    discipline = scrapy.Field()
+    category = scrapy.Field()
     athlete_id = scrapy.Field()
     rank = scrapy.Field()
     firstname = scrapy.Field()

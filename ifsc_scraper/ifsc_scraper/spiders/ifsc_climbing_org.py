@@ -4,7 +4,7 @@ import re
 from unidecode import unidecode
 from bs4 import BeautifulSoup
 from scrapy.spiders import Spider
-from ..items import EventItem, CategoryItem, AthleteItem, EntryItem, FileEntryItem
+from ..items import EventItem, AthleteItem, EntryItem, FileEntryItem
 
 # URLs of the website
 domain_name = "ifsc-climbing.org"
@@ -48,6 +48,8 @@ class IfscClimbingOrgSpider(Spider):
                 'fields': [
                     'date',
                     'event',
+                    'discipline',
+                    'category',
                     'athlete_id',
                     'rank',
                     'firstname',
@@ -142,13 +144,6 @@ class IfscClimbingOrgSpider(Spider):
                     )
                     event_yielded = True
 
-                yield CategoryItem(
-                    event_id=event_id,
-                    category_id=category_id,
-                    discipline=category_data['discipline'],
-                    name=category_data['category']
-                )
-
                 # Create headers and a payload for the POST request
                 headers = {
                     "Next-Action": "efa2fa106f24654dd09188f3c815302653521600"
@@ -161,12 +156,12 @@ class IfscClimbingOrgSpider(Spider):
                     method="POST",
                     headers=headers,
                     body=json.dumps(payload),
-                    cb_kwargs={"event_date": event_date, "event_name": event_name,
-                               "category_id": category_id},
+                    cb_kwargs={"event_id": event_id, "event_date": event_date, "event_name": event_name,
+                               "discipline": category_data['discipline'], "category": category_data['category']},
                 )
 
 # Gather data from the full results of the given event
-    def parse_results(self, response, event_date, event_name, category_id):
+    def parse_results(self, response, event_id, event_date, event_name, discipline, category):
         data = response.text
 
         # Extract the part of the response that contains the ranking data
@@ -196,11 +191,12 @@ class IfscClimbingOrgSpider(Spider):
             yield scrapy.Request(
                 athlete_url,
                 callback=self.parse_athlete,
-                cb_kwargs={"event_date": event_date, "event_name": event_name,
-                           "category_id": category_id, "rank": rank, "round_scores": round_scores}
+                cb_kwargs={"event_id": event_id, "event_date": event_date, "event_name": event_name,
+                           "discipline": discipline, "category": category,
+                           "rank": rank, "round_scores": round_scores}
             )
 
-    def parse_athlete(self, response, event_date, event_name, category_id, rank, round_scores):
+    def parse_athlete(self, response, event_id, event_date, event_name, discipline, category, rank, round_scores):
         # Extract the part of the response that contains the athlete's information
         soup = BeautifulSoup(response.text, 'html.parser')
         script_tags = soup.find_all('script')
@@ -279,7 +275,9 @@ class IfscClimbingOrgSpider(Spider):
 
             # Create an entry item and save it to the database
             yield EntryItem(
-                category_id=category_id,
+                event_id=event_id,
+                discipline=discipline,
+                category=category,
                 athlete_id=athlete_id,
                 rank=rank,
                 age=age,
@@ -292,6 +290,8 @@ class IfscClimbingOrgSpider(Spider):
             yield FileEntryItem(
                 date=event_date,
                 event=event_name,
+                discipline=discipline,
+                category=category,
                 athlete_id=athlete_id,
                 rank=rank,
                 firstname=firstname,

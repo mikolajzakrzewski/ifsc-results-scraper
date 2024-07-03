@@ -2,7 +2,7 @@
 # import requests
 # import json
 # from scrapy.spiders import Spider
-# from ..items import EventItem, CategoryItem, AthleteItem, EntryItem, FileEntryItem
+# from ..items import EventItem, AthleteItem, EntryItem, FileEntryItem
 #
 # # URLs of the result service and its API
 # domain_name = "ifsc.results.info"
@@ -98,6 +98,8 @@
 #                 'fields': [
 #                     'date',
 #                     'event',
+#                     'discipline',
+#                     'category',
 #                     'athlete_id',
 #                     'rank',
 #                     'firstname',
@@ -179,29 +181,21 @@
 #         for d_cat in json_data["d_cats"]:
 #             if d_cat["discipline_kind"] in self.disciplines and d_cat["category_name"] in self.categories:
 #                 full_result_url = d_cat["full_results_url"]
-#                 category_id = d_cat["dcat_id"]
 #                 event_id = event_id
 #                 category_discipline = d_cat["discipline_kind"]
 #                 category_name = d_cat["category_name"]
-#
-#                 # Create a category item and save it to the database
-#                 yield CategoryItem(
-#                     category_id=category_id,
-#                     event_id=event_id,
-#                     discipline=category_discipline,
-#                     name=category_name
-#                 )
 #
 #                 # Process the full result URL
 #                 yield scrapy.Request(
 #                     base_url + full_result_url,
 #                     callback=self.parse_results,
-#                     cb_kwargs={"date": date, "category_id": category_id},
+#                     cb_kwargs={"event_id": event_id, "date": date,
+#                                "discipline": category_discipline, "category": category_name},
 #                     headers={"Referer": base_url},
 #                 )
 #
 # # Gather data from the full results of the given event
-#     def parse_results(self, response, date, category_id):
+#     def parse_results(self, response, event_id, date, discipline, category):
 #         year = date[0:4]
 #         json_data = json.loads(response.text)
 #         event_name = json_data["event"]
@@ -268,7 +262,9 @@
 #                     prior_participations += 1
 #
 #             yield EntryItem(
-#                 category_id=category_id,
+#                 event_id=event_id,
+#                 discipline=discipline,
+#                 category=category,
 #                 athlete_id=athlete_id,
 #                 rank=rank,
 #                 age=age,
@@ -281,6 +277,8 @@
 #             yield FileEntryItem(
 #                 date=date,
 #                 event=event_name,
+#                 discipline=discipline,
+#                 category=category,
 #                 athlete_id=athlete_id,
 #                 rank=rank,
 #                 firstname=firstname,
