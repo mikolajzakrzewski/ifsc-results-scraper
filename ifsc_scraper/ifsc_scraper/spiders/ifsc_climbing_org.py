@@ -170,31 +170,32 @@ class IfscClimbingOrgSpider(Spider):
         ranking = json.loads(data)["data"]["ranking"]
 
         # Extract the athletes' information from the ranking data
-        for athlete in ranking:
-            athlete_id = athlete["athlete_id"]
-            rank = athlete["rank"]
-            round_scores = [
-                {"round_name": round_type["round_name"],
-                 "rank": round_type["rank"],
-                 "score": round_type["score"]}
-                for round_type in athlete["rounds"]
-            ]
+        if ranking is not None:
+            for athlete in ranking:
+                athlete_id = athlete["athlete_id"]
+                rank = athlete["rank"]
+                round_scores = [
+                    {"round_name": round_type["round_name"],
+                     "rank": round_type["rank"],
+                     "score": round_type["score"]}
+                    for round_type in athlete["rounds"]
+                ]
 
-            # Convert the athlete's name to a URL-friendly format
-            name = athlete["firstname"] + " " + athlete["lastname"].strip()
-            name = unidecode(name)
-            name = name.lower()
-            name = re.sub(r"[^a-z]", "-", name)
+                # Convert the athlete's name to a URL-friendly format
+                name = athlete["firstname"] + " " + athlete["lastname"].strip()
+                name = unidecode(name)
+                name = name.lower()
+                name = re.sub(r"[^a-z]", "-", name)
 
-            # Combine the athlete's name with the athlete's ID to form the athlete's URL
-            athlete_url = f"{base_url}/athlete/{athlete_id}/{name}"
-            yield scrapy.Request(
-                athlete_url,
-                callback=self.parse_athlete,
-                cb_kwargs={"event_id": event_id, "event_date": event_date, "event_name": event_name,
-                           "discipline": discipline, "category": category,
-                           "rank": rank, "round_scores": round_scores}
-            )
+                # Combine the athlete's name with the athlete's ID to form the athlete's URL
+                athlete_url = f"{base_url}/athlete/{athlete_id}/{name}"
+                yield scrapy.Request(
+                    athlete_url,
+                    callback=self.parse_athlete,
+                    cb_kwargs={"event_id": event_id, "event_date": event_date, "event_name": event_name,
+                               "discipline": discipline, "category": category,
+                               "rank": rank, "round_scores": round_scores}
+                )
 
     def parse_athlete(self, response, event_id, event_date, event_name, discipline, category, rank, round_scores):
         # Extract the part of the response that contains the athlete's information
