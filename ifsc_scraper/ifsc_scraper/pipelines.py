@@ -13,7 +13,7 @@ from itemadapter import ItemAdapter
 class IfscScraperPipeline:
     def __init__(self):
         # Create a connection to the database
-        self.con = sqlite3.connect("ifsc_results.db")
+        self.con = sqlite3.connect("scraped_data/ifsc_results.db")
 
         # Create a cursor object
         self.cur = self.con.cursor()
@@ -28,7 +28,8 @@ class IfscScraperPipeline:
             CREATE TABLE IF NOT EXISTS events (
                 event_id INTEGER PRIMARY KEY,
                 name TEXT,
-                date TEXT,
+                start_date TEXT,
+                end_date TEXT,
                 location TEXT
             );
             """
@@ -65,7 +66,12 @@ class IfscScraperPipeline:
                 age INTEGER,
                 years_active INTEGER,
                 prior_participations INTEGER,
-                round_scores TEXT,
+                qualification_rank INTEGER,
+                qualification_score REAL,
+                semi_final_rank INTEGER,
+                semi_final_score REAL,
+                final_rank INTEGER,
+                final_score REAL,
                 FOREIGN KEY (event_id) REFERENCES events (event_id),
                 FOREIGN KEY (athlete_id) REFERENCES athletes (athlete_id),
                 PRIMARY KEY (event_id, athlete_id)
@@ -80,13 +86,14 @@ class IfscScraperPipeline:
         if isinstance(item, EventItem):
             self.cur.execute(
                 """
-                INSERT OR IGNORE INTO events (event_id, name, date, location)
-                VALUES (?, ?, ?, ?);
+                INSERT OR IGNORE INTO events (event_id, name, start_date, end_date, location)
+                VALUES (?, ?, ?, ?, ?);
                 """,
                 (
                     adapter.get("event_id"),
                     adapter.get("name"),
-                    adapter.get("date"),
+                    adapter.get("start_date"),
+                    adapter.get("end_date"),
                     adapter.get("location")
                 )
             )
@@ -132,8 +139,9 @@ class IfscScraperPipeline:
             self.cur.execute(
                 """
                 INSERT OR IGNORE INTO entries (
-                event_id, discipline, category, athlete_id, rank, age, years_active, prior_participations, round_scores
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+                event_id, discipline, category, athlete_id, rank, age, years_active, prior_participations,
+                qualification_rank, qualification_score, semi_final_rank, semi_final_score, final_rank, final_score
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
                 """,
                 (
                     adapter.get("event_id"),
@@ -144,7 +152,12 @@ class IfscScraperPipeline:
                     adapter.get("age"),
                     adapter.get("years_active"),
                     adapter.get("prior_participations"),
-                    adapter.get("round_scores")
+                    adapter.get("qualification_rank"),
+                    adapter.get("qualification_score"),
+                    adapter.get("semi_final_rank"),
+                    adapter.get("semi_final_score"),
+                    adapter.get("final_rank"),
+                    adapter.get("final_score")
                 )
             )
             self.con.commit()

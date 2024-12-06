@@ -1,6 +1,7 @@
 import scrapy
 import json
 import re
+
 from unidecode import unidecode
 from bs4 import BeautifulSoup
 from scrapy.spiders import Spider
@@ -40,14 +41,15 @@ class IfscClimbingOrgSpider(Spider):
     # Custom settings for exporting the results to a CSV file
     custom_settings = {
         'FEEDS': {
-            'results_%(name)s_%(time)s.csv': {
+            'scraped_data/results_%(name)s_%(time)s.csv': {
                 'format': 'csv',
                 'encoding': 'utf8',
-                'store_empty': False,
+                'store_empty': True,
                 'item_classes': [FileEntryItem, 'ifsc_scraper.items.FileEntryItem'],
                 'fields': [
-                    'date',
                     'event',
+                    'event_start_date',
+                    'event_end_date',
                     'discipline',
                     'category',
                     'athlete_id',
@@ -62,7 +64,12 @@ class IfscClimbingOrgSpider(Spider):
                     'age',
                     'years_active',
                     'prior_participations',
-                    'round_scores'
+                    'qualification_rank',
+                    'qualification_score',
+                    'semi_final_rank',
+                    'semi_final_score',
+                    'final_rank',
+                    'final_score'
                 ],
                 'item_export_kwargs': {
                     'export_empty_fields': True
@@ -88,7 +95,7 @@ class IfscClimbingOrgSpider(Spider):
                 callback=self.parse_year
             )
 
-# Gather the event IDs for the given year, leagues and discipline kinds
+    # Gather the event IDs for the given year, leagues and discipline kinds
     def parse_year(self, response):
         json_data = json.loads(response.text)
 
@@ -96,17 +103,18 @@ class IfscClimbingOrgSpider(Spider):
         for event in json_data['items']:
             event_url = event['url']
             event_name = event['title']
-            event_date = event['fields']['dateFrom'][0:10]
-            event_location = event['fields']['location']
+            event_start_date = event['fields']['dateFrom'][0:10]
+            event_end_date = event['fields']['dateTo'][0:10]
+            event_location = event['fields'].get('location', None)
             yield scrapy.Request(
                 f"{event_url}result/index",
                 callback=self.parse_event,
-                cb_kwargs={"event_name": event_name, "event_date": event_date,
-                           "event_location": event_location}
+                cb_kwargs={"event_name": event_name, "event_start_date": event_start_date,
+                           "event_end_date": event_end_date, "event_location": event_location}
             )
 
-# Gather the full result URLs for the given event, discipline kinds and categories
-    def parse_event(self, response, event_name, event_date, event_location):
+    # Gather the full result URLs for the given event, discipline kinds and categories
+    def parse_event(self, response, event_name, event_start_date, event_end_date, event_location):
         text_data = response.text
 
         # Extract the event page URL from the response
@@ -122,7 +130,7 @@ class IfscClimbingOrgSpider(Spider):
         else:
             return
 
-        # Extract the discipline & category IDs from the response
+        # Extract the discipline and category IDs from the response
         start_str = "navigationItems\\\":"
         end_str = ",\\\"defaultDisciplinePath"
         start_index = text_data.find(start_str)
@@ -139,7 +147,8 @@ class IfscClimbingOrgSpider(Spider):
                     yield EventItem(
                         event_id=event_id,
                         name=event_name,
-                        date=event_date,
+                        start_date=event_start_date,
+                        end_date=event_end_date,
                         location=event_location
                     )
                     event_yielded = True
@@ -156,12 +165,13 @@ class IfscClimbingOrgSpider(Spider):
                     method="POST",
                     headers=headers,
                     body=json.dumps(payload),
-                    cb_kwargs={"event_id": event_id, "event_date": event_date, "event_name": event_name,
-                               "discipline": category_data['discipline'], "category": category_data['category']},
+                    cb_kwargs={"event_id": event_id, "event_start_date": event_start_date,
+                               "event_end_date": event_end_date, "event_name": event_name,
+                               "discipline": category_data['discipline'], "category": category_data['category']}
                 )
 
-# Gather data from the full results of the given event
-    def parse_results(self, response, event_id, event_date, event_name, discipline, category):
+    # Gather data from the full results of the given event
+    def parse_results(self, response, event_id, event_start_date, event_end_date, event_name, discipline, category):
         data = response.text
 
         # Extract the part of the response that contains the ranking data
@@ -192,12 +202,13 @@ class IfscClimbingOrgSpider(Spider):
                 yield scrapy.Request(
                     athlete_url,
                     callback=self.parse_athlete,
-                    cb_kwargs={"event_id": event_id, "event_date": event_date, "event_name": event_name,
-                               "discipline": discipline, "category": category,
-                               "rank": rank, "round_scores": round_scores}
+                    cb_kwargs={"event_id": event_id, "event_start_date": event_start_date,
+                               "event_end_date": event_end_date, "event_name": event_name, "discipline": discipline,
+                               "category": category, "rank": rank, "round_scores": round_scores}
                 )
 
-    def parse_athlete(self, response, event_id, event_date, event_name, discipline, category, rank, round_scores):
+    def parse_athlete(self, response, event_id, event_start_date, event_end_date, event_name, discipline, category,
+                      rank, round_scores):
         # Extract the part of the response that contains the athlete's information
         soup = BeautifulSoup(response.text, 'html.parser')
         script_tags = soup.find_all('script')
@@ -258,7 +269,7 @@ class IfscClimbingOrgSpider(Spider):
             )
 
             # Climbers' age is rounded down to the nearest year (general rule in climbing competitions)
-            event_year = event_date[0:4]
+            event_year = event_start_date[0:4]
             if birthday is None:
                 age = None
             else:
@@ -269,10 +280,20 @@ class IfscClimbingOrgSpider(Spider):
             years_active = int(event_year) - first_activity_year
             prior_participations = 0
             for result in reversed(athlete_info["all_results"]):
-                if result["date"] > event_date:
+                if result["date"] > event_start_date:
                     break
                 else:
                     prior_participations += 1
+
+            qualification_data = next(
+                (entry_round for entry_round in round_scores if entry_round["round_name"] == "Qualification"), {}
+            )
+            semi_final_data = next(
+                (entry_round for entry_round in round_scores if entry_round["round_name"] == "Semi-Final"), {}
+            )
+            final_data = next(
+                (entry_round for entry_round in round_scores if entry_round["round_name"] == "Final"), {}
+            )
 
             # Create an entry item and save it to the database
             yield EntryItem(
@@ -284,13 +305,19 @@ class IfscClimbingOrgSpider(Spider):
                 age=age,
                 years_active=years_active,
                 prior_participations=prior_participations,
-                round_scores=json.dumps(round_scores)
+                qualification_rank=qualification_data.get("rank", None),
+                qualification_score=qualification_data.get("score", None),
+                semi_final_rank=semi_final_data.get("rank", None),
+                semi_final_score=semi_final_data.get("score", None),
+                final_rank=final_data.get("rank", None),
+                final_score=final_data.get("score", None)
             )
 
             # Create a file entry item and save it to a file
             yield FileEntryItem(
-                date=event_date,
                 event=event_name,
+                event_start_date=event_start_date,
+                event_end_date=event_end_date,
                 discipline=discipline,
                 category=category,
                 athlete_id=athlete_id,
@@ -305,5 +332,10 @@ class IfscClimbingOrgSpider(Spider):
                 age=age,
                 years_active=years_active,
                 prior_participations=prior_participations,
-                round_scores=json.dumps(round_scores),
+                qualification_rank=qualification_data.get("rank", None),
+                qualification_score=qualification_data.get("score", None),
+                semi_final_rank=semi_final_data.get("rank", None),
+                semi_final_score=semi_final_data.get("score", None),
+                final_rank=final_data.get("rank", None),
+                final_score=final_data.get("score", None)
             )

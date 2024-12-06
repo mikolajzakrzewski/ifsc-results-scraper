@@ -15,7 +15,8 @@ class IfscScraperItem(scrapy.Item):
 class EventItem(scrapy.Item):
     event_id = scrapy.Field()
     name = scrapy.Field()
-    date = scrapy.Field()
+    start_date = scrapy.Field()
+    end_date = scrapy.Field()
     location = scrapy.Field()
 
 
@@ -42,12 +43,18 @@ class EntryItem(scrapy.Item):
     age = scrapy.Field()
     years_active = scrapy.Field()
     prior_participations = scrapy.Field()
-    round_scores = scrapy.Field()
+    qualification_rank = scrapy.Field()
+    qualification_score = scrapy.Field()
+    semi_final_rank = scrapy.Field()
+    semi_final_score = scrapy.Field()
+    final_rank = scrapy.Field()
+    final_score = scrapy.Field()
 
 
 class FileEntryItem(scrapy.Item):
-    date = scrapy.Field()
     event = scrapy.Field()
+    event_start_date = scrapy.Field()
+    event_end_date = scrapy.Field()
     discipline = scrapy.Field()
     category = scrapy.Field()
     athlete_id = scrapy.Field()
@@ -62,4 +69,9 @@ class FileEntryItem(scrapy.Item):
     age = scrapy.Field()
     years_active = scrapy.Field()
     prior_participations = scrapy.Field()
-    round_scores = scrapy.Field()
+    qualification_rank = scrapy.Field()
+    qualification_score = scrapy.Field()
+    semi_final_rank = scrapy.Field()
+    semi_final_score = scrapy.Field()
+    final_rank = scrapy.Field()
+    final_score = scrapy.Field()
