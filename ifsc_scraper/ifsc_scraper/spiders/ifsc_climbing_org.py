@@ -1,3 +1,5 @@
+import unicodedata
+
 import scrapy
 import json
 import re
@@ -97,7 +99,8 @@ class IfscClimbingOrgSpider(Spider):
 
     # Gather the event IDs for the given year, leagues and discipline kinds
     def parse_year(self, response):
-        json_data = json.loads(response.text)
+        normalized_data = unicodedata.normalize("NFKD", response.text)
+        json_data = json.loads(normalized_data)
 
         # Extract the events' information from the JSON data
         for event in json_data['items']:
@@ -115,7 +118,8 @@ class IfscClimbingOrgSpider(Spider):
 
     # Gather the full result URLs for the given event, discipline kinds and categories
     def parse_event(self, response, event_name, event_start_date, event_end_date, event_location):
-        text_data = response.text
+        normalized_data = unicodedata.normalize("NFKD", response.text)
+        unicodedata.normalize("NFKD", normalized_data)
 
         # Extract the event page URL from the response
         event_url = response.url
@@ -123,19 +127,19 @@ class IfscClimbingOrgSpider(Spider):
         # Extract the event ID from the response
         start_str = "eventId\\\":\\\""
         end_str = "\\\","
-        start_index = text_data.find(start_str)
-        end_index = text_data.find(end_str, start_index + len(start_str))
+        start_index = normalized_data.find(start_str)
+        end_index = normalized_data.find(end_str, start_index + len(start_str))
         if start_index != -1 and end_index != -1:
-            event_id = text_data[start_index + len(start_str):end_index]
+            event_id = normalized_data[start_index + len(start_str):end_index]
         else:
             return
 
         # Extract the discipline and category IDs from the response
         start_str = "navigationItems\\\":"
         end_str = ",\\\"defaultDisciplinePath"
-        start_index = text_data.find(start_str)
-        end_index = text_data.find(end_str, start_index + len(start_str))
-        event_data = text_data[start_index + len(start_str):end_index].replace("\\", "")
+        start_index = normalized_data.find(start_str)
+        end_index = normalized_data.find(end_str, start_index + len(start_str))
+        event_data = normalized_data[start_index + len(start_str):end_index].replace("\\", "")
         event_data = json.loads(event_data)
 
         # Create a variable to check if the event item has already been yielded
@@ -172,12 +176,12 @@ class IfscClimbingOrgSpider(Spider):
 
     # Gather data from the full results of the given event
     def parse_results(self, response, event_id, event_start_date, event_end_date, event_name, discipline, category):
-        data = response.text
+        normalized_data = unicodedata.normalize("NFKD", response.text)
 
         # Extract the part of the response that contains the ranking data
-        separator_index = data.find("1:")
-        data = data[separator_index + 2:].strip()
-        ranking = json.loads(data)["data"]["ranking"]
+        separator_index = normalized_data.find("1:")
+        normalized_data = normalized_data[separator_index + 2:].strip()
+        ranking = json.loads(normalized_data)["data"]["ranking"]
 
         # Extract the athletes' information from the ranking data
         if ranking is not None:
@@ -210,7 +214,8 @@ class IfscClimbingOrgSpider(Spider):
     def parse_athlete(self, response, event_id, event_start_date, event_end_date, event_name, discipline, category,
                       rank, round_scores):
         # Extract the part of the response that contains the athlete's information
-        soup = BeautifulSoup(response.text, 'html.parser')
+        normalized_data = unicodedata.normalize("NFKD", response.text)
+        soup = BeautifulSoup(normalized_data, 'html.parser')
         script_tags = soup.find_all('script')
 
         # Search for the script tag containing the athlete's information (example search text: 'firstname')
