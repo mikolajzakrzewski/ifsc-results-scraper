@@ -221,6 +221,9 @@ class IfscClimbingOrgSpider(Spider):
         # Search for the script tag containing the athlete's information (example search text: 'firstname')
         search_text = 'firstname'
         script_text = [script.string for script in script_tags if script.string and search_text in script.string]
+        if len(script_text) == 0:
+            return
+
         script_text = script_text[0]
         script_text = script_text.replace("\\", "")
 
